@@ -1,68 +1,53 @@
-// Active search area
-const searchArea = document.getElementById("searchArea");
-searchArea.addEventListener('keypress', function search(press) {
-    if(press.keyCode == 13){
-        getResults(searchArea.value);
+function searchButton() {
+    const searchedSong = document.getElementById("searched-song").value;
+    if (searchedSong == "") {
+        alert('Please, write down first....');
     }
-    }
-)
-// Active search btn
-const searchBtn = document.getElementById("searchBtn");
-searchBtn.addEventListener('click', function () {
-    getResults(searchArea.value);
-})
-// Get data from api
-function getResults(value) {
-    fetch(`https://api.lyrics.ovh/suggest/${value}`)
-    .then(response => response.json())
-    .then(songs => displayResult(songs))
-}
-// Display result function
-function displayResult(songs) {
-    const allSongs = songs.data;
-    const searchResult = document.getElementById("searchResult");
-    for (let i = 0; i < 10; i++) {
-        const title = allSongs[i].title;
-        const artist = allSongs[i].artist.name;
-        const album = allSongs[i].album.title;
-        const albumCover = allSongs[i].album.cover;
-        searchResult.innerHTML += `<div class="single-result row my-3 p-3 d-flex justify-content-between align-items-center">
-                                    <div class="col-md-9">
-                                        <h3 id="title">${title}</h3>
-                                        <p class="author lead">Album by: <span>${album}</span></p>
-                                        <p>Artist: <span id="author">${artist}</span></p>
-                                    </div>
-                                    <div>
-                                       <img src="${albumCover}" alt="">
-                                    </div>
-                                    <div class="col-md-3 text-md-right text-center">
-                                        <button class="getLyrics btn btn-success" onclick="getLyrics(this)">Get Lyrics</button>
-                                    </div>
-                                </div>`
+    else {
+        document.getElementById('results').style.display = 'block';
+        fetch(`https://api.lyrics.ovh/suggest/${searchedSong}`)
+            .then(response => response.json())
+            .then(data => {
+                // console.log(data);
+                const arrays = data.data;
+                for (let i = 0; i <= 9; i++) {
+                    const details = arrays[i];
+                    const songTitle = details.title;
+                    const artist = details.artist.name;
+                    const albumTitle = details.album.title;
+                    document.getElementById(`song-title-${i}`).innerHTML = `${songTitle}`;
+                    document.getElementById(`song-album-${i}`).innerHTML = `Album: ${albumTitle}`;
+                    document.getElementById(`artist-name-${i}`).innerHTML = `Artist: <span id="artist-${i}">${artist}</span>`;
+                }
+            })
     }
 }
-// get lyrics
-function getLyrics(btn) {
-const getLyrics = document.getElementsByClassName("getLyrics");
-for (let i = 0; i < getLyrics.length; i++) {
-    if (btn == getLyrics[i]) {
-    const artist = document.getElementById("author").innerHTML;
-    const title = document.getElementById("title").innerHTML;
-    fetch(`https://api.lyrics.ovh/v1/${artist}/${title}`)
-    .then(response => response.json())
-    .then(function displayResult(lyric) {
-        const currentLyric = lyric.lyrics;
-        const displayArea = document.getElementById("lyricsArea");
-        displayArea.innerHTML = `<button class="btn go-back btn-success" onclick="hide()">Go-Back</button>
-                                <h2 class="text-success mb-4">${title}</h2>
-                                <pre class="lyric text-white">${currentLyric}</pre>`
-        })
-    .catch(error => console.log(error))
+
+function getLyrics() {
+    for (let i = 0; i <= 9; i++) {
+        document.getElementById(`lyrics-item-${i}`).style.display = "none";
+        const artist = document.getElementById(`artist-${i}`).innerText;
+        const songTitle = document.getElementById(`song-title-${i}`).innerText;
+
+        fetch(`https://api.lyrics.ovh/v1/${artist}/${songTitle}`)
+            .then(res => res.json())
+            .then(data => {
+                const lyrics = data.lyrics;
+                document.getElementById(`lyrics-item-${i}`).innerHTML = `
+                <h2 class="text-success">Lyrics of ${songTitle}</h2>
+                <pre id="lyric-${i}">${lyrics}</pre>
+                <button class="btn btn-primary" onclick="hideLyrics('lyrics-item-${i}')"><a href="#" class="text-white">Hide Lyrics</a></button>
+                `
+                if (document.getElementById(`lyric-${i}`).innerText == "undefined") {
+                    document.getElementById(`lyrics-item-${i}`).style.display = "none";
+                }
+
+            })
     }
 }
+function showLyrics(id) {
+    document.getElementById(id).style.display = 'block';
 }
-// remove lyrics
-function hide() {
-    const displayArea = document.getElementById("lyricsArea");
-    displayArea.remove();
+function hideLyrics(id) {
+    document.getElementById(id).style.display = 'none';
 }
